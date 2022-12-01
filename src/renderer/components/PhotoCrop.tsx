@@ -1,32 +1,47 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
-import { readFile } from '../../main/helpers'
+import { Area } from 'react-easy-crop/types'
+import { readFile, cropImageData } from '../../main/helpers'
 
 export default function PhotoCrop(){
   const [imageSrc, setImageSrc] = useState() //file data
-  const [fileName, setFileName] = useState() //file address
+  const [filename, setFilename] = useState() //file address
   const [crop, setCrop] = useState({x:0, y:0})
   const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area>()
 
   const handleFileChange = async (e: any) : Promise<void> => {
     if(e.target.files && e.target.files.length){
       const file = e.target.files[0]
-      setFileName(file.path)
+      setFilename(file.path)
       const imageData: any = await readFile(file)
       setImageSrc(imageData)
     }
   }
 
-  const handleSave = (): any => {
+  const handleSave = async () => {
     //save cropped image
-    //save cropped image (filename, imageSrc, croppedAreaPixels)
-    //then reset for next photo
-    setImageSrc(undefined)
-    setZoom(1)
-    setCrop({x:0, y:0})
+    //need the base64data
+    if(croppedAreaPixels && imageSrc){
+
+      const base64data = await cropImageData(imageSrc, croppedAreaPixels)
+      const newFilename = filename +'-cropped.png'
+
+      window.electron.saveCroppedImage([newFilename, base64data])
+
+      //then reset for next photo
+      setImageSrc(undefined)
+      setZoom(1)
+      setCrop({x:0, y:0})
+
+    }
 
   }
+
+  const onCropComplete: any = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels)
+  }, [])
 
   if(!imageSrc){
     return(
@@ -45,7 +60,8 @@ export default function PhotoCrop(){
         crop={crop}
         zoom={zoom}
         onCropChange={setCrop}
-        onZoomChange={setZoom} />
+        onZoomChange={setZoom}
+        onCropComplete={onCropComplete} />
       <button className='save-btn' onClick={handleSave}>Save</button> 
     </>
   )
