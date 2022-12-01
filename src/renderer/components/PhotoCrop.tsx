@@ -18,6 +18,16 @@ export default function PhotoCrop(){
     }
   }
 
+  const handleSave = (): any => {
+    //save cropped image
+    //save cropped image (filename, imageSrc, croppedAreaPixels)
+    //then reset for next photo
+    setImageSrc(undefined)
+    setZoom(1)
+    setCrop({x:0, y:0})
+
+  }
+
   if(!imageSrc){
     return(
       <>
@@ -31,11 +41,12 @@ export default function PhotoCrop(){
   return (
     <>
       <Cropper 
-      image={imageSrc}
-      crop={crop}
-      zoom={zoom}
-      onCropChange={setCrop}
-      onZoomChange={setZoom} />
+        image={imageSrc}
+        crop={crop}
+        zoom={zoom}
+        onCropChange={setCrop}
+        onZoomChange={setZoom} />
+      <button className='save-btn' onClick={handleSave}>Save</button> 
     </>
   )
 }
